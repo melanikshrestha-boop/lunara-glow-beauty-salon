@@ -1,94 +1,278 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { FormEvent, useState } from "react";
+import { lunara } from "@/lib/lunara";
+
+const BOOK_KEY = "lunara-glow-book-requests-v1";
 
 export default function Home() {
-  // State to track if booking modal is open - starts as false (closed)
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState(false);
+
+  function onBook(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const row = {
+      name: String(fd.get("name") || "").trim(),
+      email: String(fd.get("email") || "").trim(),
+      service: String(fd.get("service") || "").trim(),
+      day: String(fd.get("day") || "").trim(),
+      notes: String(fd.get("notes") || "").trim(),
+      at: new Date().toISOString(),
+    };
+
+    if (!row.name || !row.email || !row.service || !row.day) {
+      setError(true);
+      setStatus("Name, email, service, and day are required.");
+      return;
+    }
+
+    try {
+      const prev = JSON.parse(localStorage.getItem(BOOK_KEY) || "[]") as unknown[];
+      prev.push(row);
+      localStorage.setItem(BOOK_KEY, JSON.stringify(prev.slice(-50)));
+    } catch {
+      /* ignore */
+    }
+
+    setError(false);
+    setStatus(`Got it, ${row.name.split(" ")[0]}. ${row.service} · ${row.day}.`);
+    e.currentTarget.reset();
+  }
+
+  const serviceOptions = lunara.services.flatMap((g) =>
+    g.items.map((item) => `${g.title}: ${item.name} (${item.price})`)
+  );
 
   return (
-    <div className="w-full h-screen bg-black overflow-hidden">
-      {/* Hero Section - Full screen video background with no borders */}
-      <div className="relative w-full h-full">
-        {/* Video background - fills entire screen seamlessly */}
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+    <>
+      <header className="top">
+        <a className="logo" href="#top">
+          {lunara.shortName}
+        </a>
+        <nav className="nav" aria-label="Main">
+          <a href="#services">Services</a>
+          <a href="#visit">Visit</a>
+          <a href="#book">Book</a>
+        </nav>
+        <a className="nav-phone" href={`tel:${lunara.phoneDial}`}>
+          {lunara.phone}
+        </a>
+        <button
+          type="button"
+          className="menu-btn"
+          aria-expanded={menuOpen}
+          aria-controls="drawer"
+          onClick={() => setMenuOpen((v) => !v)}
         >
-          {/* Placeholder video URL - replace with your salon film */}
-          <source
-            src="https://videos.pexels.com/video-files/3014974/3014974-sd_640_360_25fps.mp4"
-            type="video/mp4"
-          />
-          Your browser does not support the video tag.
-        </video>
+          Menu
+        </button>
+      </header>
 
-        {/* Dark overlay on video - makes text readable without harsh contrast */}
-        <div className="absolute inset-0 bg-black/40" />
-
-        {/* Content overlay - centered text and button */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-4">
-          {/* Main heading - elegant and luxurious */}
-          <div className="text-center max-w-2xl">
-            <h1 className="text-6xl md:text-7xl font-light text-white tracking-wide mb-4">
-              Lunara Glow
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-200 font-light">
-              Luxury Beauty & Wellness
-            </p>
-          </div>
-
-          {/* Book Now Button - large and elegant */}
-          <button
-            onClick={() => setIsBookingOpen(true)}
-            className="mt-8 px-12 py-4 bg-amber-600 hover:bg-amber-700 text-white text-lg font-semibold rounded-lg transition-colors duration-300 shadow-lg"
-          >
-            Book Now
-          </button>
-        </div>
+      <div className="drawer" id="drawer" hidden={!menuOpen}>
+        <a href="#services" onClick={() => setMenuOpen(false)}>
+          Services
+        </a>
+        <a href="#visit" onClick={() => setMenuOpen(false)}>
+          Visit
+        </a>
+        <a href="#book" onClick={() => setMenuOpen(false)}>
+          Book
+        </a>
+        <a href={`tel:${lunara.phoneDial}`} onClick={() => setMenuOpen(false)}>
+          Call {lunara.phone}
+        </a>
       </div>
 
-      {/* Booking Modal - pops up when "Book Now" is clicked */}
-      {isBookingOpen && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          {/* Modal box - elegant white container */}
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8">
-            {/* Close button - X in top right */}
-            <button
-              onClick={() => setIsBookingOpen(false)}
-              className="float-right text-gray-500 hover:text-gray-700 text-2xl mb-4"
-            >
-              ×
-            </button>
-
-            {/* Modal heading */}
-            <h2 className="text-3xl font-light text-gray-900 mb-6">
-              Book Your Appointment
-            </h2>
-
-            {/* Placeholder text - Square integration will go here */}
-            <div className="text-gray-600 text-center py-8">
-              <p className="mb-4">
-                Square Booking Integration Coming Soon
-              </p>
-              <p className="text-sm">
-                Customers will select their service, preferred time, and staff member here.
-              </p>
-            </div>
-
-            {/* Close button at bottom */}
-            <button
-              onClick={() => setIsBookingOpen(false)}
-              className="w-full mt-6 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition-colors"
-            >
-              Close
-            </button>
+      <main id="top">
+        <section className="hero">
+          <p className="kicker">Astoria · wax · brows · lashes · facials</p>
+          <h1>{lunara.name}</h1>
+          <p className="lead">
+            Clear prices. Straight menu. No fake “luxury spa” theater.
+          </p>
+          <p className="sub">
+            {lunara.address}. Open {lunara.hours.toLowerCase()}. First visit
+            gets 20% off. Loyalty points toward free brow threading.
+          </p>
+          <div className="hero-actions">
+            <a className="btn" href="#book">
+              Request a time
+            </a>
+            <a className="btn btn-ghost" href={`tel:${lunara.phoneDial}`}>
+              Call
+            </a>
+            <a className="btn btn-ghost" href="#services">
+              See menu
+            </a>
           </div>
-        </div>
-      )}
-    </div>
+          <div className="meta-row">
+            <span>
+              <strong>Offer</strong> · {lunara.offer}
+            </span>
+            <span>
+              <strong>Hours</strong> · {lunara.hours}
+            </span>
+            <span>
+              <strong>Points</strong> · {lunara.loyalty}
+            </span>
+          </div>
+        </section>
+
+        <section className="section" id="services">
+          <div className="section-head">
+            <h2>Menu</h2>
+            <p>What we do. What it costs. How long.</p>
+          </div>
+
+          {lunara.services.map((group) => (
+            <div className="service-block" key={group.id} id={group.id}>
+              <h3>{group.title}</h3>
+              <p className="service-note">{group.note}</p>
+              <table className="menu">
+                <thead>
+                  <tr>
+                    <th scope="col">Service</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.items.map((item) => (
+                    <tr key={item.name}>
+                      <td>
+                        <strong>{item.name}</strong>
+                        {"description" in item && item.description ? (
+                          <span className="desc">{item.description}</span>
+                        ) : null}
+                      </td>
+                      <td>{item.time}</td>
+                      <td>{item.price}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </section>
+
+        <section className="section split">
+          <div>
+            <h2>Good to know</h2>
+            <ul className="plain">
+              <li>{lunara.offer}</li>
+              <li>{lunara.loyalty}</li>
+              <li>Call or book below — same day if the book is open.</li>
+              <li>Bring a reference photo for brows/lashes if you have one.</li>
+            </ul>
+          </div>
+          <div>
+            <h2>From Yelp</h2>
+            <ul className="reviews">
+              {lunara.reviews.map((r) => (
+                <li key={r.author}>
+                  <q>{r.quote}</q>
+                  <cite>{r.author}</cite>
+                </li>
+              ))}
+            </ul>
+            <p style={{ marginTop: 12, fontSize: 13 }}>
+              <a href={lunara.yelp} target="_blank" rel="noreferrer">
+                More on Yelp →
+              </a>
+            </p>
+          </div>
+        </section>
+
+        <section className="section two-col" id="visit">
+          <div>
+            <h2>Visit</h2>
+            <dl className="facts">
+              <div>
+                <dt>Address</dt>
+                <dd>{lunara.address}</dd>
+              </div>
+              <div>
+                <dt>Hours</dt>
+                <dd>{lunara.hours}</dd>
+              </div>
+              <div>
+                <dt>Phone</dt>
+                <dd>
+                  <a href={`tel:${lunara.phoneDial}`}>{lunara.phone}</a>
+                </dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd>
+                  <a href={`mailto:${lunara.email}`}>{lunara.email}</a>
+                </dd>
+              </div>
+              <div>
+                <dt>IG</dt>
+                <dd>{lunara.instagram}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="book" id="book">
+            <h2>Book</h2>
+            <p className="book-help">
+              Demo form for now — request saves on this device. For a real slot
+              today, call {lunara.phone}.
+            </p>
+            <form className="book-form" onSubmit={onBook}>
+              <label>
+                Name
+                <input name="name" type="text" required autoComplete="name" />
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" required autoComplete="email" />
+              </label>
+              <label className="wide">
+                Service
+                <select name="service" required defaultValue="">
+                  <option value="" disabled>
+                    Select
+                  </option>
+                  {serviceOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Day
+                <input name="day" type="date" required />
+              </label>
+              <label className="wide">
+                Notes
+                <textarea
+                  name="notes"
+                  rows={3}
+                  placeholder="Staff preference, timing, first visit…"
+                />
+              </label>
+              <button type="submit" className="btn wide-btn">
+                Send request
+              </button>
+              <p className={`status${error ? " is-error" : ""}`} role="status">
+                {status}
+              </p>
+            </form>
+          </div>
+        </section>
+      </main>
+
+      <footer className="foot">
+        <span>
+          {lunara.shortName} · Astoria
+        </span>
+        <span>{new Date().getFullYear()}</span>
+      </footer>
+    </>
   );
 }
