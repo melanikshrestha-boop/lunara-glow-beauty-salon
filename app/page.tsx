@@ -87,18 +87,18 @@ export default function Home() {
 
       <main id="top">
         <section className="hero">
-          <p className="kicker">Astoria · wax · brows · lashes · facials</p>
+          <p className="kicker">Astoria · brows · lashes · wax · facials</p>
           <h1>{lunara.name}</h1>
           <p className="lead">
-            Clear prices. Straight menu. No fake “luxury spa” theater.
+            Same menu as our Fresha book — exact names, prices, and times.
           </p>
           <p className="sub">
             {lunara.address}. Open {lunara.hours.toLowerCase()}. First visit
             gets 20% off. Loyalty points toward free brow threading.
           </p>
           <div className="hero-actions">
-            <a className="btn" href="#book">
-              Request a time
+            <a className="btn" href={lunara.freshaUrl} target="_blank" rel="noreferrer">
+              Book on Fresha
             </a>
             <a className="btn btn-ghost" href={`tel:${lunara.phoneDial}`}>
               Call
@@ -129,7 +129,6 @@ export default function Home() {
           {lunara.services.map((group) => (
             <div className="service-block" key={group.id} id={group.id}>
               <h3>{group.title}</h3>
-              <p className="service-note">{group.note}</p>
               <table className="menu">
                 <thead>
                   <tr>
@@ -140,7 +139,7 @@ export default function Home() {
                 </thead>
                 <tbody>
                   {group.items.map((item) => (
-                    <tr key={item.name}>
+                    <tr key={`${group.id}-${item.name}-${item.price}`}>
                       <td>
                         <strong>{item.name}</strong>
                         {"description" in item && item.description ? (
@@ -219,8 +218,12 @@ export default function Home() {
           <div className="book" id="book">
             <h2>Book</h2>
             <p className="book-help">
-              Demo form for now — request saves on this device. For a real slot
-              today, call {lunara.phone}.
+              Prefer the live book?{" "}
+              <a href={lunara.freshaUrl} target="_blank" rel="noreferrer">
+                Open Fresha
+              </a>
+              . Or send a request here (saved on this device). Call{" "}
+              {lunara.phone} for same-day.
             </p>
             <form className="book-form" onSubmit={onBook}>
               <label>
